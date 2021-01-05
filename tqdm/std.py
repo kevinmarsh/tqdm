@@ -848,6 +848,7 @@ class tqdm(Comparable):
         iterable  : iterable, optional
             Iterable to decorate with a progressbar.
             Leave blank to manually manage the updates.
+        # TODO: update doc string if overriding desc
         desc  : str, optional
             Prefix for the progressbar.
         total  : int or float, optional
@@ -1048,7 +1049,11 @@ class tqdm(Comparable):
 
         # Store the arguments
         self.iterable = iterable
-        self.desc = desc or ''
+        if callable(desc):
+            self.set_description_func(desc, refresh=False)
+        else:
+            self.desc_func = None
+            self.desc = desc or ''
         self.total = total
         self.leave = leave
         self.fp = file
@@ -1373,6 +1378,27 @@ class tqdm(Comparable):
         self.desc = desc or ''
         if refresh:
             self.refresh()
+
+    def set_description_func(self, desc_func, refresh=True):
+        """
+        Set a callable description function for the progress bar.
+
+        Parameters
+        ----------
+        desc  : function
+            To be called when generating the description.
+        refresh  : bool, optional
+            Forces refresh [default: True].
+        """
+        self.desc_func = desc_func
+        self.update_description(refresh=refresh)
+
+    def update_description(self, refresh=True):
+        """Modify description based on the already set desc_func."""
+        if not self.desc_func:
+            # TODO: add proper configuration exception
+            raise NotImplementedError()
+        self.set_description(desc=self.desc_func(), refresh=refresh)
 
     def set_postfix(self, ordered_dict=None, refresh=True, **kwargs):
         """
